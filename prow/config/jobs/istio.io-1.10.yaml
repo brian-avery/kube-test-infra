@@ -1,10 +1,11 @@
 branches:
 - release-1.10
-image: gcr.io/istio-testing/build-tools:release-1.10-2021-06-17T16-10-50
+image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
 jobs:
 - command:
   - make
   - lint
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: lint
   node_selector:
     testing: test-pool
@@ -13,6 +14,7 @@ jobs:
 - command:
   - make
   - gen-check
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: gencheck
   node_selector:
     testing: test-pool
@@ -22,6 +24,7 @@ jobs:
   - entrypoint
   - prow/integ-suite-kind.sh
   - doc.test.profile_default
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: doc.test.profile_default
   node_selector:
     testing: test-pool
@@ -32,6 +35,7 @@ jobs:
   - entrypoint
   - prow/integ-suite-kind.sh
   - doc.test.profile_demo
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: doc.test.profile_demo
   node_selector:
     testing: test-pool
@@ -42,6 +46,7 @@ jobs:
   - entrypoint
   - prow/integ-suite-kind.sh
   - doc.test.profile_none
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: doc.test.profile_none
   node_selector:
     testing: test-pool
@@ -54,6 +59,7 @@ jobs:
   - --topology
   - MULTICLUSTER
   - doc.test.multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: doc.test.multicluster
   node_selector:
     testing: test-pool
@@ -67,6 +73,7 @@ jobs:
   - --token-path=/etc/github-token/oauth
   - --cmd=make update_ref_docs
   - --dry-run
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   modifiers:
   - optional
   name: update-ref-docs-dry-run
@@ -83,6 +90,7 @@ org: istio
 repo: istio.io
 requirement_presets:
   cache:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -95,12 +103,14 @@ requirement_presets:
         type: DirectoryOrCreate
       name: build-cache
   deploy:
+    annotations: null
     env: null
     labels:
       preset-prow-deployer-service-account: "true"
     volumeMounts: null
     volumes: null
   docker:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -110,12 +120,14 @@ requirement_presets:
     - emptyDir: {}
       name: docker-root
   gcp:
+    annotations: null
     env: null
     labels:
       preset-service-account: "true"
     volumeMounts: null
     volumes: null
   github:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -126,7 +138,21 @@ requirement_presets:
     - name: github
       secret:
         secretName: oauth-token
+  github-optional:
+    annotations: null
+    env: null
+    labels: null
+    volumeMounts:
+    - mountPath: /etc/github-token
+      name: github
+      readOnly: true
+    volumes:
+    - name: github
+      secret:
+        optional: true
+        secretName: oauth-token
   gocache:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -139,6 +165,7 @@ requirement_presets:
         type: DirectoryOrCreate
       name: build-cache
   kind:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -162,6 +189,7 @@ requirement_presets:
     - emptyDir: {}
       name: docker-root
   release:
+    annotations: null
     env: null
     labels:
       preset-release-pipeline: "true"

@@ -1,10 +1,11 @@
 branches:
 - release-1.10
-image: gcr.io/istio-testing/build-tools:release-1.10-2021-06-17T16-10-50
+image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
 jobs:
 - command:
   - make
   - lint
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: lint
   node_selector:
     testing: test-pool
@@ -20,6 +21,7 @@ jobs:
   - --modifier=commonfiles
   - --token-path=/etc/github-token/oauth
   - --cmd=make update-common && make gen
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: update-common
   node_selector:
     testing: test-pool
@@ -40,6 +42,7 @@ jobs:
   - --modifier=commonfiles
   - --token-path=/etc/github-token/oauth
   - --cmd=make update-common && make gen
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: update-common-istio.io
   node_selector:
     testing: test-pool
@@ -64,6 +67,7 @@ jobs:
   - --
   - --post=make gen
   - --source=$AUTOMATOR_ROOT_DIR/files/common/scripts/setup_env.sh
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: update-build-tools-image
   node_selector:
     testing: test-pool
@@ -78,6 +82,7 @@ org: istio
 repo: common-files
 requirement_presets:
   cache:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -90,12 +95,14 @@ requirement_presets:
         type: DirectoryOrCreate
       name: build-cache
   deploy:
+    annotations: null
     env: null
     labels:
       preset-prow-deployer-service-account: "true"
     volumeMounts: null
     volumes: null
   docker:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -105,12 +112,14 @@ requirement_presets:
     - emptyDir: {}
       name: docker-root
   gcp:
+    annotations: null
     env: null
     labels:
       preset-service-account: "true"
     volumeMounts: null
     volumes: null
   github:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -121,7 +130,21 @@ requirement_presets:
     - name: github
       secret:
         secretName: oauth-token
+  github-optional:
+    annotations: null
+    env: null
+    labels: null
+    volumeMounts:
+    - mountPath: /etc/github-token
+      name: github
+      readOnly: true
+    volumes:
+    - name: github
+      secret:
+        optional: true
+        secretName: oauth-token
   gocache:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -134,6 +157,7 @@ requirement_presets:
         type: DirectoryOrCreate
       name: build-cache
   kind:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -157,6 +181,7 @@ requirement_presets:
     - emptyDir: {}
       name: docker-root
   release:
+    annotations: null
     env: null
     labels:
       preset-release-pipeline: "true"

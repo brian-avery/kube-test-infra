@@ -1,0 +1,31 @@
+defaults:
+  branches:
+  - release-1.10
+  repo-allowlist:
+  - istio
+org: istio
+repo: istio
+transforms:
+- env:
+    DOCKER_HUB: gcr.io/istio-prow-build
+    GCS_BUCKET: istio-private-build/dev
+  job-allowlist:
+  - release_istio_release-1.10_postsubmit
+  job-type:
+  - postsubmit
+  labels:
+    preset-enable-ssh: "true"
+    preset-override-deps: release-1.10-istio
+- job-denylist:
+  - benchmark-report_istio_release-1.10_postsubmit
+  - release_istio_release-1.10_postsubmit
+  - cache-experiment_istio_release-1.10_postsubmit
+  - cache-experiment_istio_release-1.10
+  - update-ref-docs-dry-run_istio_release-1.10
+  job-type:
+  - presubmit
+  - postsubmit
+  labels:
+    preset-enable-ssh: "true"
+    preset-override-deps: release-1.10-istio
+    preset-override-envoy: "true"

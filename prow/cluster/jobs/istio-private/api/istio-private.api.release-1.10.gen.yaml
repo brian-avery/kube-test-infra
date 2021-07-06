@@ -10,6 +10,7 @@ postsubmits:
     decorate: true
     labels:
       preset-enable-ssh: "true"
+      preset-override-envoy: "true"
     name: build_api_release-1.10_postsubmit_priv
     path_alias: istio.io/api
     spec:
@@ -17,7 +18,7 @@ postsubmits:
       - command:
         - make
         - presubmit
-        image: gcr.io/istio-testing/build-tools:release-1.10-2021-06-17T16-10-50
+        image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
         name: ""
         resources:
           limits:
@@ -48,6 +49,7 @@ postsubmits:
     decorate: true
     labels:
       preset-enable-ssh: "true"
+      preset-override-envoy: "true"
     name: gencheck_api_release-1.10_postsubmit_priv
     path_alias: istio.io/api
     spec:
@@ -55,7 +57,7 @@ postsubmits:
       - command:
         - make
         - gen-check
-        image: gcr.io/istio-testing/build-tools:release-1.10-2021-06-17T16-10-50
+        image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
         name: ""
         resources:
           limits:
@@ -77,30 +79,37 @@ postsubmits:
           path: /tmp/prow/cache
           type: DirectoryOrCreate
         name: build-cache
-presubmits:
-  istio-private/api:
-  - always_run: true
-    annotations:
+  - annotations:
       testgrid-create-test-group: "false"
     branches:
     - ^release-1.10$
     clone_uri: git@github.com:istio-private/api.git
     cluster: private
     decorate: true
+    extra_refs:
+    - base_ref: master
+      clone_uri: git@github.com:istio-private/test-infra.git
+      org: istio-private
+      path_alias: istio.io/test-infra
+      repo: test-infra
     labels:
       preset-enable-ssh: "true"
-      preset-override-deps: release-1.10-istio
-    name: build_api_release-1.10_priv
+      preset-override-envoy: "true"
+    name: update_api_dep_api_release-1.10_postsubmit_priv
     path_alias: istio.io/api
     spec:
       containers:
       - command:
-        - make
-        - presubmit
-        env:
-        - name: GCS_BUCKET
-          value: istio-private-build/dev
-        image: gcr.io/istio-testing/build-tools:release-1.10-2021-06-17T16-10-50
+        - ../test-infra/tools/automator/automator.sh
+        - --org=istio
+        - --repo=istio,client-go
+        - '--title=Automator: update istio/api@$AUTOMATOR_SRC_BRANCH dependency in
+          $AUTOMATOR_ORG/$AUTOMATOR_REPO@$AUTOMATOR_BRANCH'
+        - --labels=auto-merge,release-notes-none
+        - --modifier=update_api_dep
+        - --token-path=/etc/github-token/oauth
+        - --cmd=go get istio.io/api@$AUTOMATOR_SHA && go mod tidy && make clean gen
+        image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
         name: ""
         resources:
           limits:
@@ -115,6 +124,9 @@ presubmits:
         - mountPath: /home/prow/go/pkg
           name: build-cache
           subPath: gomod
+        - mountPath: /etc/github-token
+          name: github
+          readOnly: true
       nodeSelector:
         testing: test-pool
       volumes:
@@ -122,46 +134,6 @@ presubmits:
           path: /tmp/prow/cache
           type: DirectoryOrCreate
         name: build-cache
-  - always_run: true
-    annotations:
-      testgrid-create-test-group: "false"
-    branches:
-    - ^release-1.10$
-    clone_uri: git@github.com:istio-private/api.git
-    cluster: private
-    decorate: true
-    labels:
-      preset-enable-ssh: "true"
-      preset-override-deps: release-1.10-istio
-    name: gencheck_api_release-1.10_priv
-    path_alias: istio.io/api
-    spec:
-      containers:
-      - command:
-        - make
-        - gen-check
-        env:
-        - name: GCS_BUCKET
-          value: istio-private-build/dev
-        image: gcr.io/istio-testing/build-tools:release-1.10-2021-06-17T16-10-50
-        name: ""
-        resources:
-          limits:
-            cpu: "3"
-            memory: 24Gi
-          requests:
-            cpu: "1"
-            memory: 3Gi
-        securityContext:
-          privileged: true
-        volumeMounts:
-        - mountPath: /home/prow/go/pkg
-          name: build-cache
-          subPath: gomod
-      nodeSelector:
-        testing: test-pool
-      volumes:
-      - hostPath:
-          path: /tmp/prow/cache
-          type: DirectoryOrCreate
-        name: build-cache
+      - name: github
+        secret:
+          secretName: oauth-token

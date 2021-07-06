@@ -1,10 +1,11 @@
 branches:
 - release-1.10
-image: gcr.io/istio-testing/build-tools:release-1.10-2021-06-17T16-10-50
+image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
 jobs:
 - command:
   - make
   - build
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: build
   node_selector:
     testing: test-pool
@@ -13,6 +14,7 @@ jobs:
 - command:
   - make
   - lint
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: lint
   node_selector:
     testing: test-pool
@@ -21,6 +23,7 @@ jobs:
 - command:
   - make
   - test
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: test
   node_selector:
     testing: test-pool
@@ -29,6 +32,7 @@ jobs:
 - command:
   - make
   - gen-check
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: gencheck
   node_selector:
     testing: test-pool
@@ -38,6 +42,7 @@ jobs:
   - entrypoint
   - make
   - containers
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: containers
   node_selector:
     testing: test-pool
@@ -53,6 +58,7 @@ jobs:
   - entrypoint
   - make
   - containers-test
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: containers-test
   node_selector:
     testing: test-pool
@@ -70,6 +76,7 @@ jobs:
   - -C
   - perf_dashboard
   - deploy
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: deploy-perf-dashboard
   node_selector:
     testing: test-pool
@@ -84,6 +91,7 @@ org: istio
 repo: tools
 requirement_presets:
   cache:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -96,12 +104,14 @@ requirement_presets:
         type: DirectoryOrCreate
       name: build-cache
   deploy:
+    annotations: null
     env: null
     labels:
       preset-prow-deployer-service-account: "true"
     volumeMounts: null
     volumes: null
   docker:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -111,12 +121,14 @@ requirement_presets:
     - emptyDir: {}
       name: docker-root
   gcp:
+    annotations: null
     env: null
     labels:
       preset-service-account: "true"
     volumeMounts: null
     volumes: null
   github:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -127,7 +139,21 @@ requirement_presets:
     - name: github
       secret:
         secretName: oauth-token
+  github-optional:
+    annotations: null
+    env: null
+    labels: null
+    volumeMounts:
+    - mountPath: /etc/github-token
+      name: github
+      readOnly: true
+    volumes:
+    - name: github
+      secret:
+        optional: true
+        secretName: oauth-token
   gocache:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -140,6 +166,7 @@ requirement_presets:
         type: DirectoryOrCreate
       name: build-cache
   kind:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -163,6 +190,7 @@ requirement_presets:
     - emptyDir: {}
       name: docker-root
   release:
+    annotations: null
     env: null
     labels:
       preset-release-pipeline: "true"
@@ -195,3 +223,9 @@ resources:
     requests:
       cpu: "3"
       memory: 16Gi
+  multicluster:
+    limits:
+      memory: 24Gi
+    requests:
+      cpu: "8"
+      memory: 3Gi

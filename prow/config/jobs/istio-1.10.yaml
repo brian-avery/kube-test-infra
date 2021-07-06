@@ -1,6 +1,6 @@
 branches:
 - release-1.10
-image: gcr.io/istio-testing/build-tools:release-1.10-2021-06-17T16-10-50
+image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
 jobs:
 - command:
   - entrypoint
@@ -10,6 +10,7 @@ jobs:
   - build
   - racetest
   - binaries-test
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: unit-tests
   node_selector:
     testing: test-pool
@@ -19,6 +20,7 @@ jobs:
 - command:
   - entrypoint
   - prow/release-test.sh
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: release-test
   node_selector:
     testing: test-pool
@@ -32,6 +34,7 @@ jobs:
 - command:
   - entrypoint
   - prow/release-commit.sh
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: release
   node_selector:
     testing: test-pool
@@ -46,6 +49,7 @@ jobs:
   - entrypoint
   - make
   - benchtest
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   modifiers:
   - optional
   - skipped
@@ -63,6 +67,7 @@ jobs:
   - make
   - benchtest
   - report-benchtest
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: benchmark-report
   node_selector:
     testing: test-pool
@@ -80,7 +85,27 @@ jobs:
   env:
   - name: TEST_SELECT
     value: -postsubmit,-flaky,-multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-pilot-k8s-tests
+  node_selector:
+    testing: test-pool
+  requirements:
+  - cache
+  - kind
+  - gocache
+  types:
+  - presubmit
+- command:
+  - entrypoint
+  - prow/integ-suite-kind.sh
+  - test.integration.pilot.kube.presubmit
+  env:
+  - name: TEST_SELECT
+    value: -postsubmit,-flaky,-multicluster
+  - name: INTEGRATION_TEST_FLAGS
+    value: ' --istio.test.istio.enableCNI=true '
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
+  name: integ-cni-k8s-tests
   node_selector:
     testing: test-pool
   requirements:
@@ -96,6 +121,7 @@ jobs:
   env:
   - name: TEST_SELECT
     value: -postsubmit,-flaky,-multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-security-k8s-tests
   node_selector:
     testing: test-pool
@@ -112,6 +138,7 @@ jobs:
   env:
   - name: TEST_SELECT
     value: -postsubmit,-flaky,-multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-telemetry-k8s-tests
   node_selector:
     testing: test-pool
@@ -130,6 +157,7 @@ jobs:
   env:
   - name: TEST_SELECT
     value: -multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-telemetry-mc-k8s-tests
   node_selector:
     testing: test-pool
@@ -137,6 +165,31 @@ jobs:
   - cache
   - kind
   - gocache
+  resources: multicluster
+- command:
+  - entrypoint
+  - prow/integ-suite-kind.sh
+  - --topology
+  - MULTICLUSTER
+  - test.integration.telemetry.kube
+  env:
+  - name: TEST_SELECT
+    value: -multicluster
+  - name: INTEGRATION_TEST_FLAGS
+    value: --istio.test.istio.istiodlessRemotes
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
+  modifiers:
+  - optional
+  - hidden
+  - skipped
+  name: integ-telemetry-istiodless-mc-k8s-tests
+  node_selector:
+    testing: test-pool
+  requirements:
+  - cache
+  - kind
+  - gocache
+  resources: multicluster
 - command:
   - entrypoint
   - prow/integ-suite-kind.sh
@@ -146,6 +199,7 @@ jobs:
   env:
   - name: TEST_SELECT
     value: -postsubmit,-flaky,+multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-multicluster-k8s-tests
   node_selector:
     testing: test-pool
@@ -153,6 +207,7 @@ jobs:
   - cache
   - kind
   - gocache
+  resources: multicluster
   types:
   - presubmit
 - command:
@@ -164,6 +219,7 @@ jobs:
     value: distroless
   - name: TEST_SELECT
     value: -multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-distroless-k8s-tests
   node_selector:
     testing: test-pool
@@ -182,10 +238,10 @@ jobs:
     value: ipv6
   - name: TEST_SELECT
     value: -multicluster
-  node_selector:
-    # COS does not currently support IPv6
-    testing: ipv6-pool
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-ipv6-k8s-tests
+  node_selector:
+    testing: ipv6-pool
   requirements:
   - cache
   - kind
@@ -197,6 +253,7 @@ jobs:
   env:
   - name: TEST_SELECT
     value: -postsubmit,-flaky,-multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-operator-controller-tests
   node_selector:
     testing: test-pool
@@ -213,6 +270,7 @@ jobs:
   env:
   - name: TEST_SELECT
     value: -multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-pilot-k8s-tests
   node_selector:
     testing: test-pool
@@ -231,6 +289,7 @@ jobs:
   env:
   - name: TEST_SELECT
     value: -multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-pilot-multicluster-tests
   node_selector:
     testing: test-pool
@@ -238,6 +297,31 @@ jobs:
   - cache
   - kind
   - gocache
+  resources: multicluster
+- command:
+  - entrypoint
+  - prow/integ-suite-kind.sh
+  - --topology
+  - MULTICLUSTER
+  - test.integration.pilot.kube
+  env:
+  - name: TEST_SELECT
+    value: -multicluster
+  - name: INTEGRATION_TEST_FLAGS
+    value: --istio.test.istio.istiodlessRemotes
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
+  modifiers:
+  - optional
+  - hidden
+  - skipped
+  name: integ-pilot-istiodless-multicluster-tests
+  node_selector:
+    testing: test-pool
+  requirements:
+  - cache
+  - kind
+  - gocache
+  resources: multicluster
 - command:
   - entrypoint
   - prow/integ-suite-kind.sh
@@ -245,6 +329,7 @@ jobs:
   env:
   - name: TEST_SELECT
     value: -multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-security-k8s-tests
   node_selector:
     testing: test-pool
@@ -257,12 +342,28 @@ jobs:
 - command:
   - entrypoint
   - prow/integ-suite-kind.sh
+  - test.integration-fuzz.security.fuzz.kube
+  cron: 0 7 * * *
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
+  name: integ-security-fuzz-k8s-tests
+  node_selector:
+    testing: test-pool
+  requirements:
+  - cache
+  - kind
+  - gocache
+  types:
+  - periodic
+- command:
+  - entrypoint
+  - prow/integ-suite-kind.sh
   - --topology
   - MULTICLUSTER
   - test.integration.security.kube
   env:
   - name: TEST_SELECT
     value: -multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-security-multicluster-tests
   node_selector:
     testing: test-pool
@@ -270,6 +371,31 @@ jobs:
   - cache
   - kind
   - gocache
+  resources: multicluster
+- command:
+  - entrypoint
+  - prow/integ-suite-kind.sh
+  - --topology
+  - MULTICLUSTER
+  - test.integration.security.kube
+  env:
+  - name: TEST_SELECT
+    value: -multicluster
+  - name: INTEGRATION_TEST_FLAGS
+    value: --istio.test.istio.istiodlessRemotes
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
+  modifiers:
+  - optional
+  - hidden
+  - skipped
+  name: integ-security-istiodless-multicluster-tests
+  node_selector:
+    testing: test-pool
+  requirements:
+  - cache
+  - kind
+  - gocache
+  resources: multicluster
 - command:
   - entrypoint
   - prow/integ-suite-kind.sh
@@ -277,6 +403,7 @@ jobs:
   env:
   - name: TEST_SELECT
     value: -multicluster
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-telemetry-k8s-tests
   node_selector:
     testing: test-pool
@@ -290,6 +417,7 @@ jobs:
   - entrypoint
   - prow/integ-suite-kind.sh
   - test.integration.helm.kube
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-helm-tests
   node_selector:
     testing: test-pool
@@ -306,6 +434,7 @@ jobs:
   env:
   - name: INTEGRATION_TEST_FLAGS
     value: ' --istio.test.retries=1 '
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-k8s-116
   node_selector:
     testing: test-pool
@@ -327,6 +456,7 @@ jobs:
   env:
   - name: INTEGRATION_TEST_FLAGS
     value: ' --istio.test.retries=1 '
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-k8s-117
   node_selector:
     testing: test-pool
@@ -341,11 +471,12 @@ jobs:
   - entrypoint
   - prow/integ-suite-kind.sh
   - --node-image
-  - kindest/node:v1.18.15
+  - kindest/node:v1.18.19
   - test.integration.kube.presubmit
   env:
   - name: INTEGRATION_TEST_FLAGS
     value: ' --istio.test.retries=1 '
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-k8s-118
   node_selector:
     testing: test-pool
@@ -360,11 +491,12 @@ jobs:
   - entrypoint
   - prow/integ-suite-kind.sh
   - --node-image
-  - kindest/node:v1.19.7
+  - kindest/node:v1.19.11
   - test.integration.kube.presubmit
   env:
   - name: INTEGRATION_TEST_FLAGS
     value: ' --istio.test.retries=1 '
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: integ-k8s-119
   node_selector:
     testing: test-pool
@@ -379,12 +511,51 @@ jobs:
   - entrypoint
   - prow/integ-suite-kind.sh
   - --node-image
-  - gcr.io/istio-testing/kind-node:v1.21.0
+  - gcr.io/istio-testing/kind-node:v1.20.7
   - test.integration.kube.presubmit
   env:
   - name: INTEGRATION_TEST_FLAGS
     value: ' --istio.test.retries=1 '
-  name: integ-k8s-121
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
+  name: integ-k8s-120
+  node_selector:
+    testing: test-pool
+  requirements:
+  - cache
+  - kind
+  - gocache
+  timeout: 4h0m0s
+  types:
+  - postsubmit
+- command:
+  - entrypoint
+  - prow/integ-suite-kind.sh
+  - --node-image
+  - gcr.io/istio-testing/kind-node:v1.22.0-alpha.3
+  - test.integration.kube.presubmit
+  env:
+  - name: INTEGRATION_TEST_FLAGS
+    value: ' --istio.test.retries=1 '
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
+  name: integ-k8s-122
+  node_selector:
+    testing: test-pool
+  requirements:
+  - cache
+  - kind
+  - gocache
+  timeout: 4h0m0s
+  types:
+  - postsubmit
+- command:
+  - entrypoint
+  - prow/integ-suite-kind.sh
+  - test.integration.kube.presubmit
+  env:
+  - name: INTEGRATION_TEST_FLAGS
+    value: ' --istio.test.retries=1 --istio.test.istio.enableCNI=true '
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
+  name: integ-cni-k8s-tests
   node_selector:
     testing: test-pool
   requirements:
@@ -397,6 +568,7 @@ jobs:
 - command:
   - make
   - test.integration.analyze
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: analyze-tests
   node_selector:
     testing: test-pool
@@ -408,6 +580,7 @@ jobs:
 - command:
   - make
   - lint
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: lint
   node_selector:
     testing: test-pool
@@ -420,6 +593,7 @@ jobs:
 - command:
   - make
   - gen-check
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: gencheck
   node_selector:
     testing: test-pool
@@ -431,6 +605,7 @@ jobs:
 - command:
   - ../test-infra/tools/check_release_notes.sh
   - --token-path=/etc/github-token/oauth
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: release-notes
   node_selector:
     testing: test-pool
@@ -439,7 +614,7 @@ jobs:
   - istio/tools@master
   requirements:
   - cache
-  - github-optional
+  - github
   - gocache
   types:
   - presubmit
@@ -447,6 +622,7 @@ org: istio
 repo: istio
 requirement_presets:
   cache:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -459,12 +635,14 @@ requirement_presets:
         type: DirectoryOrCreate
       name: build-cache
   deploy:
+    annotations: null
     env: null
     labels:
       preset-prow-deployer-service-account: "true"
     volumeMounts: null
     volumes: null
   docker:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -474,12 +652,14 @@ requirement_presets:
     - emptyDir: {}
       name: docker-root
   gcp:
+    annotations: null
     env: null
     labels:
       preset-service-account: "true"
     volumeMounts: null
     volumes: null
   github:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -490,7 +670,21 @@ requirement_presets:
     - name: github
       secret:
         secretName: oauth-token
+  github-optional:
+    annotations: null
+    env: null
+    labels: null
+    volumeMounts:
+    - mountPath: /etc/github-token
+      name: github
+      readOnly: true
+    volumes:
+    - name: github
+      secret:
+        optional: true
+        secretName: oauth-token
   gocache:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -503,6 +697,7 @@ requirement_presets:
         type: DirectoryOrCreate
       name: build-cache
   kind:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -526,6 +721,7 @@ requirement_presets:
     - emptyDir: {}
       name: docker-root
   release:
+    annotations: null
     env: null
     labels:
       preset-release-pipeline: "true"
@@ -552,3 +748,9 @@ resources:
     requests:
       cpu: "3"
       memory: 16Gi
+  multicluster:
+    limits:
+      memory: 24Gi
+    requests:
+      cpu: "8"
+      memory: 3Gi

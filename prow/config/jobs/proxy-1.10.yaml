@@ -1,9 +1,10 @@
 branches:
 - release-1.10
-image: gcr.io/istio-testing/build-tools-proxy:release-1.10-2021-06-17T16-10-50
+image: gcr.io/istio-testing/build-tools-proxy:master-2021-06-28T18-08-04
 jobs:
 - command:
   - ./prow/proxy-presubmit.sh
+  image: gcr.io/istio-testing/build-tools-proxy:master-2021-06-28T18-08-04
   name: test
   node_selector:
     testing: build-pool
@@ -15,6 +16,7 @@ jobs:
   - presubmit
 - command:
   - ./prow/proxy-presubmit-asan.sh
+  image: gcr.io/istio-testing/build-tools-proxy:master-2021-06-28T18-08-04
   name: test-asan
   node_selector:
     testing: build-pool
@@ -26,6 +28,7 @@ jobs:
   - presubmit
 - command:
   - ./prow/proxy-presubmit-tsan.sh
+  image: gcr.io/istio-testing/build-tools-proxy:master-2021-06-28T18-08-04
   name: test-tsan
   node_selector:
     testing: build-pool
@@ -37,6 +40,7 @@ jobs:
   - presubmit
 - command:
   - ./prow/proxy-presubmit-release.sh
+  image: gcr.io/istio-testing/build-tools-proxy:master-2021-06-28T18-08-04
   name: release-test
   node_selector:
     testing: build-pool
@@ -48,9 +52,7 @@ jobs:
   - presubmit
 - command:
   - ./prow/proxy-presubmit-centos-release.sh
-  image: gcr.io/istio-testing/build-tools-centos:release-1.10-2021-06-17T16-10-50
-  modifiers:
-  - optional
+  image: gcr.io/istio-testing/build-tools-centos:master-2021-06-28T18-08-04
   name: release-centos-test
   node_selector:
     testing: build-pool
@@ -63,6 +65,7 @@ jobs:
 - command:
   - entrypoint
   - ./prow/proxy-presubmit-wasm.sh
+  image: gcr.io/istio-testing/build-tools-proxy:master-2021-06-28T18-08-04
   name: check-wasm
   node_selector:
     testing: build-pool
@@ -76,6 +79,7 @@ jobs:
 - command:
   - entrypoint
   - ./prow/proxy-postsubmit.sh
+  image: gcr.io/istio-testing/build-tools-proxy:master-2021-06-28T18-08-04
   name: release
   node_selector:
     testing: build-pool
@@ -88,7 +92,7 @@ jobs:
   - postsubmit
 - command:
   - ./prow/proxy-postsubmit-centos.sh
-  image: gcr.io/istio-testing/build-tools-centos:release-1.10-2021-06-17T16-10-50
+  image: gcr.io/istio-testing/build-tools-centos:master-2021-06-28T18-08-04
   name: release-centos
   node_selector:
     testing: build-pool
@@ -107,7 +111,7 @@ jobs:
   - --modifier=update_proxy_dep
   - --token-path=/etc/github-token/oauth
   - --cmd=bin/update_proxy.sh $AUTOMATOR_SHA
-  image: gcr.io/istio-testing/build-tools:release-1.10-2021-06-17T16-10-50
+  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   name: update-istio
   node_selector:
     testing: build-pool
@@ -125,6 +129,7 @@ org: istio
 repo: proxy
 requirement_presets:
   cache:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -137,12 +142,14 @@ requirement_presets:
         type: DirectoryOrCreate
       name: build-cache
   deploy:
+    annotations: null
     env: null
     labels:
       preset-prow-deployer-service-account: "true"
     volumeMounts: null
     volumes: null
   docker:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -152,12 +159,14 @@ requirement_presets:
     - emptyDir: {}
       name: docker-root
   gcp:
+    annotations: null
     env: null
     labels:
       preset-service-account: "true"
     volumeMounts: null
     volumes: null
   github:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -168,7 +177,21 @@ requirement_presets:
     - name: github
       secret:
         secretName: oauth-token
+  github-optional:
+    annotations: null
+    env: null
+    labels: null
+    volumeMounts:
+    - mountPath: /etc/github-token
+      name: github
+      readOnly: true
+    volumes:
+    - name: github
+      secret:
+        optional: true
+        secretName: oauth-token
   gocache:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -181,6 +204,7 @@ requirement_presets:
         type: DirectoryOrCreate
       name: build-cache
   kind:
+    annotations: null
     env: null
     labels: null
     volumeMounts:
@@ -204,6 +228,7 @@ requirement_presets:
     - emptyDir: {}
       name: docker-root
   release:
+    annotations: null
     env: null
     labels:
       preset-release-pipeline: "true"
@@ -229,3 +254,9 @@ resources:
     requests:
       cpu: "3"
       memory: 16Gi
+  multicluster:
+    limits:
+      memory: 24Gi
+    requests:
+      cpu: "8"
+      memory: 3Gi

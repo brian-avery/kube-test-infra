@@ -3,104 +3,24 @@ branches:
 image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
 jobs:
 - command:
-  - make
-  - lint
-  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
-  name: lint
-  node_selector:
-    testing: test-pool
-  requirements:
-  - cache
-- command:
-  - make
-  - test
-  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
-  name: test
-  node_selector:
-    testing: test-pool
-  requirements:
-  - cache
-- command:
-  - make
-  - gen-check
-  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
-  name: gencheck
-  node_selector:
-    testing: test-pool
-  requirements:
-  - cache
-- command:
-  - entrypoint
-  - test/publish.sh
-  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
-  name: dry-run
-  node_selector:
-    testing: test-pool
-  regex: \.go$|\.sh$
-  requirements:
-  - cache
-  - gcp
-  - docker
-  resources: build
-- command:
-  - release/build-warning.sh
+  - ../test-infra/scripts/validate_schema.sh
+  - --document-path=./features.yaml
+  - --schema-path=./features_schema.json
   image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
   modifiers:
   - optional
-  name: build-warning
+  name: validate-features
   node_selector:
     testing: test-pool
-  regex: ^release/trigger-build$
+  repos:
+  - istio/test-infra@master
+  - istio/tools@master
   requirements:
   - cache
   types:
   - presubmit
-- command:
-  - release/publish-warning.sh
-  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
-  modifiers:
-  - optional
-  name: publish-warning
-  node_selector:
-    testing: test-pool
-  regex: ^release/trigger-publish$
-  requirements:
-  - cache
-  types:
-  - presubmit
-- command:
-  - entrypoint
-  - release/build.sh
-  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
-  name: build-release
-  node_selector:
-    testing: test-pool
-  regex: ^release/trigger-build$
-  requirements:
-  - cache
-  - release
-  - docker
-  - github-optional
-  resources: build
-  types:
-  - postsubmit
-- command:
-  - entrypoint
-  - release/publish.sh
-  image: gcr.io/istio-testing/build-tools:master-2021-06-28T18-08-04
-  name: publish-release
-  node_selector:
-    testing: test-pool
-  regex: ^release/trigger-publish$
-  requirements:
-  - cache
-  - release
-  - docker
-  resources: build
-  types:
-  - postsubmit
 org: istio
-repo: release-builder
+repo: enhancements
 requirement_presets:
   cache:
     annotations: null
@@ -209,35 +129,10 @@ requirement_presets:
     volumeMounts: null
     volumes: null
 resources:
-  benchmark:
-    limits:
-      memory: 24Gi
-    requests:
-      cpu: "15"
-      memory: 8Gi
-  build:
-    limits:
-      cpu: "8"
-      memory: 24Gi
-    requests:
-      cpu: "5"
-      memory: 3Gi
   default:
     limits:
       cpu: "3"
       memory: 24Gi
     requests:
       cpu: "1"
-      memory: 3Gi
-  lint:
-    limits:
-      memory: 24Gi
-    requests:
-      cpu: "3"
-      memory: 16Gi
-  multicluster:
-    limits:
-      memory: 24Gi
-    requests:
-      cpu: "8"
       memory: 3Gi
