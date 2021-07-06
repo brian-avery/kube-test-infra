@@ -29,11 +29,12 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/kr/pretty"
 	"gopkg.in/robfig/cron.v2"
-	"istio.io/test-infra/prow/genjobs/cmd/genjobs"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	prowjob "k8s.io/test-infra/prow/apis/prowjobs/v1"
 	"k8s.io/test-infra/prow/config"
+
+	"istio.io/test-infra/prow/genjobs/cmd/genjobs"
 )
 
 func exit(err error, context string) {

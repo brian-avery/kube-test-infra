@@ -127,7 +127,7 @@ func main() {
 			exit(err, "walking through the meta config files failed")
 		}
 
-		//istio-private
+		// istio-private
 		if err := filepath.Walk(*privateInputDir, func(src string, file os.FileInfo, err error) error {
 			if err != nil {
 				fmt.Printf("error: %s\n", err.Error())
