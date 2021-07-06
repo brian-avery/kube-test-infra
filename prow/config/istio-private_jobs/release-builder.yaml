@@ -1,3 +1,7 @@
+org: istio
+repo: release-builder
+support_release_branching: true
+
 defaults:
   branches: [master]
   repo-allowlist: [release-builder]

@@ -29,6 +29,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/kr/pretty"
 	"gopkg.in/robfig/cron.v2"
+	"istio.io/test-infra/prow/genjobs/cmd/genjobs"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	prowjob "k8s.io/test-infra/prow/apis/prowjobs/v1"
@@ -183,6 +184,31 @@ func (cli *Client) ReadJobsConfig(file string) JobsConfig {
 	}
 
 	return resolveOverwrites(cli.GlobalConfig, jobsConfig)
+}
+
+// Reads the private jobs yaml
+func (cli *Client) ReadPrivateJobsConfig(file string) genjobs.Configuration {
+	yamlFile, err := ioutil.ReadFile(file)
+	if err != nil {
+		exit(err, "failed to read "+file)
+	}
+
+	jobsConfig := genjobs.Configuration{}
+	if err := yaml.Unmarshal(yamlFile, &jobsConfig); err != nil {
+		exit(err, "failed to unmarshal "+file)
+	}
+
+	return jobsConfig
+}
+
+// Writes the job yaml
+func WritePrivateJobConfig(jobsConfig genjobs.Configuration, file string) error {
+	bytes, err := yaml.Marshal(jobsConfig)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(file, bytes, 0644)
 }
 
 func resolveOverwrites(globalConfig GlobalConfig, jobsConfig JobsConfig) JobsConfig {

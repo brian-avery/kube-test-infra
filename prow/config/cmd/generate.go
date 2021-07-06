@@ -19,10 +19,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
-	"regexp"
 
 	k8sProwConfig "k8s.io/test-infra/prow/config"
 
@@ -44,9 +42,17 @@ func GetFileName(repo string, org string, branch string) string {
 }
 
 var (
-	inputDir  = flag.String("input-dir", "../jobs", "directory of input jobs")
-	outputDir = flag.String("output-dir", "../../cluster/jobs", "directory of output jobs")
+	inputDir        = flag.String("input-dir", "../jobs", "directory of input jobs")
+	outputDir       = flag.String("output-dir", "../../cluster/jobs", "directory of output jobs")
+	privateInputDir = flag.String("private-input-dir", "../istio-private_jobs", "directory of istio-private input jobs")
 )
+
+func privateTransformSlice(in []string, branch string) []string {
+	for key, val := range in {
+		in[key] = fmt.Sprintf("%s_%s", val, branch)
+	}
+	return in
+}
 
 func main() {
 	flag.Parse()
@@ -70,6 +76,9 @@ func main() {
 
 	if os.Args[1] == "branch" {
 		if err := filepath.Walk(*inputDir, func(src string, file os.FileInfo, err error) error {
+			if err != nil {
+				fmt.Printf("error: %s\n", err.Error())
+			}
 			if file.IsDir() {
 				return nil
 			}
@@ -81,17 +90,17 @@ func main() {
 			jobs.Jobs = config.FilterReleaseBranchingJobs(jobs.Jobs)
 
 			if jobs.SupportReleaseBranching {
-				tagRegex := regexp.MustCompile(`^(.+):(.+)-([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2})$`)
-				match := tagRegex.FindStringSubmatch(jobs.Image)
+				//	tagRegex := regexp.MustCompile(`^(.+):(.+)-([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2})$`)
+				//	match := tagRegex.FindStringSubmatch(jobs.Image)
 				branch := "release-" + flag.Arg(1)
-				if len(match) == 4 {
+				/*if len(match) == 4 {
 					newImage := fmt.Sprintf("%s:%s-%s", match[1], branch, match[3])
 					if err := exec.Command("gcloud", "container", "images", "add-tag", match[0], newImage).Run(); err != nil {
 						exit(err, "unable to add image tag: "+newImage)
 					} else {
 						jobs.Image = newImage
 					}
-				}
+				}*/
 				jobs.Branches = []string{branch}
 				jobs.SupportReleaseBranching = false
 
@@ -108,6 +117,49 @@ func main() {
 			return nil
 		}); err != nil {
 			exit(err, "walking through the meta config files failed")
+		}
+
+		//istio-private
+		if err := filepath.Walk(*privateInputDir, func(src string, file os.FileInfo, err error) error {
+			if err != nil {
+				fmt.Printf("error: %s\n", err.Error())
+			}
+
+			fmt.Printf("%s\n\t%s\n", src, *privateInputDir)
+			if file.IsDir() {
+				return nil
+			}
+			if filepath.Ext(file.Name()) != ".yaml" && filepath.Ext(file.Name()) != ".yml" || file.Name() == ".global.yaml" {
+				log.Println("skipping", file.Name())
+				return nil
+			}
+			jobs := cli.ReadPrivateJobsConfig(src)
+			if jobs.SupportReleaseBranching {
+				branch := "release-" + flag.Arg(1)
+				jobs.Defaults.Branches = []string{branch}
+				jobs.SupportReleaseBranching = false
+
+				for key, transform := range jobs.Transforms {
+					transform.JobAllowlist = privateTransformSlice(transform.JobAllowlist, branch)
+					transform.JobDenylist = privateTransformSlice(transform.JobDenylist, branch)
+					jobs.Transforms[key] = transform
+
+				}
+				fmt.Printf("Found job: %s\n", src)
+				fmt.Printf("Job:\n\t%+v", jobs)
+				name := file.Name()
+				ext := filepath.Ext(name)
+				name = name[:len(name)-len(ext)] + "-" + flag.Arg(1) + ext
+
+				dst := path.Join("..", "istio-private_jobs", name)
+				if err := config.WritePrivateJobConfig(jobs, dst); err != nil {
+					exit(err, "writing branched config failed")
+				}
+			}
+
+			return nil
+		}); err != nil {
+			exit(err, "walking through the private meta config files failed")
 		}
 	} else {
 		type ref struct {
