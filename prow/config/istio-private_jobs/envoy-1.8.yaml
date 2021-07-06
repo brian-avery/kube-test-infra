@@ -1,6 +1,6 @@
 org: istio
 repo: envoy
-support_release_branching: true
+support_release_branching: false
 
 defaults:
   branches: [release-1.8]
