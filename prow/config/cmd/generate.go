@@ -21,6 +21,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	k8sProwConfig "k8s.io/test-infra/prow/config"
 
@@ -47,9 +48,16 @@ var (
 	privateInputDir = flag.String("private-input-dir", "../istio-private_jobs", "directory of istio-private input jobs")
 )
 
-func privateTransformSlice(in []string, branch string) []string {
+func privateTransformJobs(in []string, branch string) []string {
 	for key, val := range in {
-		in[key] = fmt.Sprintf("%s_%s", val, branch)
+		if strings.HasSuffix(val, "_postsubmit") {
+			val = strings.Replace(val, "_postsubmit", fmt.Sprintf("_%s_postsubmit", branch), 1)
+		} else if strings.HasSuffix(val, "_presubmit") {
+			val = strings.Replace(val, "_presubmit", fmt.Sprintf("_%s_presubmit", branch), 1)
+		} else {
+			val = fmt.Sprintf("%s_%s", val, branch)
+		}
+		in[key] = val
 	}
 	return in
 }
@@ -138,15 +146,19 @@ func main() {
 				branch := "release-" + flag.Arg(1)
 				jobs.Defaults.Branches = []string{branch}
 				jobs.SupportReleaseBranching = false
+				jobs.Defaults.Modifier = strings.Replace(jobs.Defaults.Modifier, "master_", fmt.Sprintf("%s_", branch), 1)
 
 				for key, transform := range jobs.Transforms {
-					transform.JobAllowlist = privateTransformSlice(transform.JobAllowlist, branch)
-					transform.JobDenylist = privateTransformSlice(transform.JobDenylist, branch)
+					transform.JobAllowlist = privateTransformJobs(transform.JobAllowlist, branch)
+					transform.JobDenylist = privateTransformJobs(transform.JobDenylist, branch)
+
+					for key, val := range transform.Labels {
+						transform.Labels[key] = strings.Replace(val, "master", branch, 1)
+					}
+
 					jobs.Transforms[key] = transform
 
 				}
-				fmt.Printf("Found job: %s\n", src)
-				fmt.Printf("Job:\n\t%+v", jobs)
 				name := file.Name()
 				ext := filepath.Ext(name)
 				name = name[:len(name)-len(ext)] + "-" + flag.Arg(1) + ext
